@@ -2,10 +2,10 @@ const Converter = require('../Converter')
 const { expect } = require('chai')
 const { describe, it } = require('mocha')
 
-describe('converter', () => {
+describe('english', () => {
   describe('translateSegmentToNumber', () => {
     before(() => {
-      this.converter = new Converter('en')
+      this.converter = new Converter()
     })
 
     it('one', () => {
@@ -43,7 +43,7 @@ describe('converter', () => {
 
   describe('translateSegmentFromNumber', () => {
     before(() => {
-      this.converter = new Converter('en')
+      this.converter = new Converter()
     })
 
     describe('success', () => {

@@ -43,14 +43,20 @@
     "18": "eighteen",
     "19": "nineteen"
   },
-  "powers": [
-    "thousand",
-    "million",
-    "billion",
-    "trillion",
-    "quadrillion",
-    "quintillion",
-    "sextillion"
-  ],
-  "and": "and"
+  "powers": {
+    "singular": [
+      "thousand",
+      "million",
+      "billion",
+      "trillion",
+      "quadrillion",
+      "quintillion",
+      "sextillion"
+    ],
+    "plural": {}
+  },
+  "and": {
+    "text": "and",
+    "position": "hundreds"
+  }
 }

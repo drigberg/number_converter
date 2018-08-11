@@ -24,10 +24,15 @@ class Converter {
     this.numberRegex = new RegExp('^\\d+$')
   }
 
+  /**
+   * Parses json file for given logale
+   * @param {String} locale
+   * @return {Object} object containing translations for locale
+   */
   getLocale(locale) {
     const locales = fs.readdirSync(path.join(__dirname, 'translations'))
-    .filter(item => path.extname(item) === '.json')
-    .map(item => path.basename(item, '.json'))
+      .filter(item => path.extname(item) === '.json')
+      .map(item => path.basename(item, '.json'))
 
 
     if (!locales.includes(locale)) {
@@ -80,8 +85,8 @@ class Converter {
       }
       text = text.slice(1)
 
-      if (ret.length && text) {
-        ret.push(this.locale.and)
+      if (ret.length && text && this.locale.and.position === 'hundreds') {
+        ret.push(this.locale.and.text)
       }
     }
 
@@ -95,6 +100,10 @@ class Converter {
         ret.push(this.locale.fromNumber.tens[text[0]])
       }
       text = text.slice(1)
+
+      if (ret.length && text && text !== '0' && this.locale.and.position === 'tens') {
+        ret.push(this.locale.and.text)
+      }
     }
 
     if (text[0] !== '0') {
@@ -119,7 +128,13 @@ class Converter {
         let text = this.translateSegmentFromNumber(segment)
 
         if (powerIndex >= 0 && text) {
-          text = `${text} ${this.locale.powers[powerIndex]}`
+          const powerText = this.locale.powers.singular[powerIndex]
+
+          if (text !== this.locale.fromNumber.ones['1'] && this.locale.powers.plural[powerText]) {
+            text = `${text} ${this.locale.powers.plural[powerText]}`
+          } else {
+            text = `${text} ${powerText}`
+          }
         }
 
         powerIndex -= 1
@@ -142,7 +157,12 @@ class Converter {
     }
 
     let ret = []
-    let words = text.split(' ').filter(item => item !== this.locale.and)
+    let words = text.split(' ').filter(item => item !== this.locale.and.text)
+
+    // some languages have three-digit exceptions
+    if (this.locale.toNumber.exceptions[words[0]]) {
+      return this.locale.toNumber.exceptions[words[0]]
+    }
 
     if (this.locale.toNumber.hundreds[words[0]]) {
       ret.push(this.locale.toNumber.hundreds[words[0]])
@@ -182,15 +202,25 @@ class Converter {
    */
   toNumber(input) {
     const segments = input.split(', ')
+    const pluralPowers = Object.values(this.locale.powers.plural)
+    const invertedPlurals = invert(this.locale.powers.plural)
 
     // the last word of the first segment determines the length of the array
-    const highestPowerOfOneThousand = this.locale.powers.indexOf(last(segments[0].split(' '))) + 1
+    const highestPowerWord = last(segments[0].split(' '))
+    let highestPowerOfOneThousand = 0
+
+    if (this.locale.powers.singular.includes(highestPowerWord)) {
+      highestPowerOfOneThousand = this.locale.powers.singular.indexOf(highestPowerWord) + 1
+    } else if (pluralPowers.includes(highestPowerWord)) {
+      highestPowerOfOneThousand = this.locale.powers.singular.indexOf(invertedPlurals[highestPowerWord]) + 1
+    }
 
     if (highestPowerOfOneThousand === 0) {
       return this.translateSegmentToNumber(input, false)
     }
 
     const ret = Array(highestPowerOfOneThousand + 1).fill('000')
+
 
     for (let i = 0; i < segments.length; i++) {
       // pad after first segment
@@ -201,8 +231,20 @@ class Converter {
 
       // if the segment ends with a word like "thousand", determine its
       // position and translate the rest
-      if (this.locale.powers.includes(last(segment.split(' ')))) {
-        position = ret.length - (this.locale.powers.indexOf(last(segment.split(' '))) + 2)
+
+      let powerIndex = -1
+
+      const lastWord = last(segment.split(' '))
+
+      if (this.locale.powers.singular.includes(lastWord)) {
+        powerIndex = this.locale.powers.singular.indexOf(lastWord)
+      } else if (Object.values(this.locale.powers.plural).includes(lastWord)) {
+
+        powerIndex = this.locale.powers.singular.indexOf(invertedPlurals[lastWord])
+      }
+
+      if (powerIndex > -1) {
+        position = ret.length - (powerIndex + 2)
 
         // translate everything except the last word
         let toTranslate = segment.split(' ')

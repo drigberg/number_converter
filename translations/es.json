@@ -42,16 +42,37 @@
     "16": "dieciséis",
     "17": "diecisiete",
     "18": "dieciocho",
-    "19": "diecinueve"
+    "19": "diecinueve",
+    "21": "vientiuno",
+    "22": "vientidos",
+    "23": "vientitres",
+    "24": "vienticuatro",
+    "25": "vienticinco",
+    "26": "vientiseis",
+    "27": "vientisiete",
+    "28": "vientiocho",
+    "29": "vientinueve"
   },
-  "powers": [
-    "mil",
-    "millon",
-    "mil millones",
-    "trillon",
-    "cuatrillón",
-    "quintillon",
-    "sestillón"
-  ],
-  "and": "y"
+  "powers": {
+    "singular": [
+      "mil",
+      "millon",
+      "mil millones",
+      "trillon",
+      "cuatrillón",
+      "quintillon",
+      "sestillón"
+    ],
+    "plural": {
+      "millon": "millones",
+      "trillon": "trillones" ,
+      "cuatrillón": "cuatrilliones",
+      "quintillon": "quintillones",
+      "sestillón": "sestillones"
+    }
+  },
+  "and": {
+    "text": "y",
+    "position": "tens"
+  }
 }
