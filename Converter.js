@@ -1,5 +1,7 @@
 const {
-  isNumber,
+  isObject,
+  invert,
+  reduce,
 } = require('lodash')
 
 const locales = {
@@ -37,15 +39,6 @@ const locales = {
       '8': 'eight hundred',
       '9': 'nine hundred',
     },
-    powers: [
-      'thousand',
-      'million',
-      'billion',
-      'trillion',
-      'quadrillion',
-      'quintillion',
-      'sextillion'
-    ],
     exceptions: {
       '11': 'eleven',
       '12': 'twelve',
@@ -56,7 +49,17 @@ const locales = {
       '17': 'seventeen',
       '18': 'eighteen',
       '19': 'nineteen'
-    }
+    },
+    powers: [
+      'thousand',
+      'million',
+      'billion',
+      'trillion',
+      'quadrillion',
+      'quintillion',
+      'sextillion'
+    ],
+    and: 'and',
   }
 }
 
@@ -75,38 +78,33 @@ class Converter {
       throw new Error(`Locale must be one of ${Object.keys(locales).join(', ')}`)
     }
 
-    this.locale = locales[locale]
+    this.locale = {
+      fromNumber: locales[locale],
+      toNumber: this.invertLocale(locales[locale])
+    }
+
     this.separator = separator
     this.numberRegex = new RegExp('^\\d+$')
   }
 
-  /**
-   * Parses string into sets of three characters from the right
-   * @param {String} text - string to parse
-   * @return {Array[String]} - array of three characters each, plus leftover
-   */
-  toThrees(text) {
-    function recurse(text, segments) {
-      if (text.length >= 3) {
-        segments.unshift(text.slice(text.length - 3))
-        return recurse(text.slice(0, text.length - 3), segments)
+  invertLocale(locale) {
+    return reduce(locale, (acc, translations, key) => {
+      if (isObject(translations) && !Array.isArray(translations)) {
+        acc[key] = invert(translations)
+      } else {
+        acc[key] = translations
       }
 
-      if (text.length) {
-        segments.unshift(text)
-      }
-
-      return segments
-    }
-
-    return recurse(text, [])
+      return acc;
+    }, {})
   }
 
   /**
    * Converts text with three or fewer digits to text
-   * @param {String} text
+   * @param {String} text - text to translate
+   * @param {Boolean} includeAnd - include "and" after the hundreds place
    */
-  partFromNumber(text) {
+  translateSegment(text, includeAnd) {
     if (!text.length) {
       throw new Error('input must have at least one digit')
     }
@@ -115,49 +113,50 @@ class Converter {
 
     if (text.length === 3) {
       if (text[0] !== '0') {
-        ret += this.locale.hundreds[text[0]]
+        ret = this.locale.fromNumber.hundreds[text[0]]
       }
       text = text.slice(1)
+
+      if (ret && includeAnd && text) {
+        ret = `${ret} and`
+      }
     }
 
-    if (this.locale.exceptions[text]) {
-      ret = `${ret} ${this.locale.exceptions[text] }`
+    if (this.locale.fromNumber.exceptions[text]) {
+      ret = `${ret} ${this.locale.fromNumber.exceptions[text] }`
       return ret
     }
 
     if (text.length === 2) {
       if (text[0] !== '0') {
-        ret = `${ret} ${this.locale.tens[text[0]] }`
+        ret = `${ret} ${this.locale.fromNumber.tens[text[0]] }`
       }
       text = text.slice(1)
     }
 
     if (text[0] !== '0') {
-      ret = `${ret} ${this.locale.ones[text[0]]}`
+      ret = `${ret} ${this.locale.fromNumber.ones[text[0]]}`
     }
 
     return ret.trim()
   }
 
   /**
-   *
-   * @param {String} number - number
+   * Translates number to text
+   * @param {String} input - number as string, with separators
+   * @return {String} translated number
    */
   fromNumber(input) {
-    if (!this.numberRegex.test(input)) {
-      throw new Error('Input must be a string containing only digits and separators')
-    }
-
-    const segments = this.toThrees(String(number))
+    const segments = input.split(this.separator)
 
     let powerIndex = segments.length - 2
 
     return segments
       .map((segment) => {
-        let text = this.partFromNumber(segment)
+        let text = this.translateSegment(segment, powerIndex >= 0)
 
         if (powerIndex >= 0 && text) {
-          text = `${text} ${this.locale.powers[powerIndex]}`
+          text = `${text} ${this.locale.fromNumber.powers[powerIndex]}`
         }
 
         powerIndex -= 1
@@ -168,10 +167,21 @@ class Converter {
       .trim()
   }
 
+  // /**
+  //  * Translates text to number
+  //  * @param {String} input - translated text
+  //  * @return {String} number, with separators
+  //  */
+  // toNumber(input) {
+  //   const segments = input.split(', ')
+  //   const
 
-  toNumber(text) {
+  //   return
+  //     .map((segment) => {
 
-  }
+  //     })
+
+  // }
 }
 
 module.exports = Converter
