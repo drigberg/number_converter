@@ -8,10 +8,10 @@ Supports English (en) and Spanish (es):
 
 ```js
 const englishConv = new Converter({ locale: 'en', separator: ',' })
-enConv.fromNumber('1,234,111') // one million, two hundred thirty four thousand, one hundred eleven
-enConv.toNumber('one hundred thousand, one hundred twenty three') // 100,123
+englishConv.fromNumber('1,234,111') // one million, two hundred thirty four thousand, one hundred eleven
+englishConv.toNumber('one hundred thousand, one hundred twenty three') // 100,123
 
 const spanishConv = new Converter({ locale: 'es', separator: '.' })
-enConv.fromNumber('10.000.001') // diez millones, uno
-enConv.toNumber('novecientos noventa y nueve mil, novecientos noventa y nueve') // 999.999
+spanishConv.fromNumber('10.000.001') // diez millones, uno
+spanishConv.toNumber('novecientos noventa y nueve mil, novecientos noventa y nueve') // 999.999
 ```
