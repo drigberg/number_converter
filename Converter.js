@@ -5,64 +5,8 @@ const {
   reduce,
 } = require('lodash')
 
-const locales = {
-  en: {
-    ones: {
-      '1': 'one',
-      '2': 'two',
-      '3': 'three',
-      '4': 'four',
-      '5': 'five',
-      '6': 'six',
-      '7': 'seven',
-      '8': 'eight',
-      '9': 'nine',
-    },
-    tens: {
-      '1': 'ten',
-      '2': 'twenty',
-      '3': 'thirty',
-      '4': 'forty',
-      '5': 'fifty',
-      '6': 'sixty',
-      '7': 'seventy',
-      '8': 'eighty',
-      '9': 'ninety'
-    },
-    hundreds: {
-      '1': 'one hundred',
-      '2': 'two hundred',
-      '3': 'three hundred',
-      '4': 'four hundred',
-      '5': 'five hundred',
-      '6': 'six hundred',
-      '7': 'seven hundred',
-      '8': 'eight hundred',
-      '9': 'nine hundred',
-    },
-    exceptions: {
-      '11': 'eleven',
-      '12': 'twelve',
-      '13': 'thirteen',
-      '14': 'fourteen',
-      '15': 'fifteen',
-      '16': 'sixteen',
-      '17': 'seventeen',
-      '18': 'eighteen',
-      '19': 'nineteen'
-    },
-    powers: [
-      'thousand',
-      'million',
-      'billion',
-      'trillion',
-      'quadrillion',
-      'quintillion',
-      'sextillion'
-    ],
-    and: 'and',
-  }
-}
+const fs = require('fs')
+const path = require('path')
 
 class Converter {
   /**
@@ -75,25 +19,35 @@ class Converter {
     locale = 'en',
     separator = '.',
   } = {}) {
-    if (!locales[locale]) {
-      throw new Error(`Locale must be one of ${Object.keys(locales).join(', ')}`)
+    this.locale = this.getLocale(locale)
+    this.separator = separator
+    this.numberRegex = new RegExp('^\\d+$')
+  }
+
+  getLocale(locale) {
+    const locales = fs.readdirSync(path.join(__dirname, 'translations'))
+    .filter(item => path.extname(item) === '.json')
+    .map(item => path.basename(item, '.json'))
+
+
+    if (!locales.includes(locale)) {
+      throw new Error(`Locale must be one of ${locales.join(', ')}`)
     }
+
+    const data = fs.readFileSync(path.join(__dirname, 'translations', `${locale}.json`), 'utf8')
 
     const {
       and,
       powers,
       ...translations
-    } = locales[locale]
+    } = JSON.parse(data)
 
-    this.locale = {
+    return {
       fromNumber: translations,
       toNumber: this.invertTranslations(translations),
       and,
       powers,
     }
-
-    this.separator = separator
-    this.numberRegex = new RegExp('^\\d+$')
   }
 
   invertTranslations(locale) {
@@ -106,15 +60,19 @@ class Converter {
   /**
    * Converts text with three or fewer digits to text
    * @param {String} text - text to translate
-   * @param {Boolean} includeAnd - include "and" after the hundreds place
    * @return {String} translated text
    */
-  translateSegmentFromNumber(text, includeAnd) {
+  translateSegmentFromNumber(text) {
     if (!text.length) {
       throw new Error('input must have at least one digit')
     }
 
     let ret = []
+
+    // some languages have three-digit exceptions (ex: Spanish 100 === 'cien')
+    if (this.locale.fromNumber.exceptions[text]) {
+      return this.locale.fromNumber.exceptions[text]
+    }
 
     if (text.length === 3) { // eslint-disable-line max-args
       if (text[0] !== '0') {
@@ -122,7 +80,7 @@ class Converter {
       }
       text = text.slice(1)
 
-      if (ret.length && includeAnd && text) {
+      if (ret.length && text) {
         ret.push(this.locale.and)
       }
     }
@@ -158,7 +116,7 @@ class Converter {
 
     return segments
       .map((segment) => {
-        let text = this.translateSegmentFromNumber(segment, powerIndex >= 0)
+        let text = this.translateSegmentFromNumber(segment)
 
         if (powerIndex >= 0 && text) {
           text = `${text} ${this.locale.powers[powerIndex]}`
@@ -235,7 +193,9 @@ class Converter {
     const ret = Array(highestPowerOfOneThousand + 1).fill('000')
 
     for (let i = 0; i < segments.length; i++) {
-      const pad = i === 0
+      // pad after first segment
+      const pad = Boolean(i)
+      const segment = segments[i]
 
       let position = ret.length - 1
 
@@ -246,10 +206,10 @@ class Converter {
 
         // translate everything except the last word
         let toTranslate = segment.split(' ')
-        toTranslate = toTranslate.slice(0, toTranslate.length - 2).join(' ')
+        toTranslate = toTranslate.slice(0, toTranslate.length - 1).join(' ')
 
         ret[position] = this.translateSegmentToNumber(toTranslate, pad)
-        return
+        continue
       }
 
       ret[position] = this.translateSegmentToNumber(segment, pad)

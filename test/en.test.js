@@ -3,7 +3,6 @@ const { expect } = require('chai')
 const { describe, it } = require('mocha')
 
 describe('converter', () => {
-
   describe('translateSegmentToNumber', () => {
     before(() => {
       this.converter = new Converter('en')
@@ -57,7 +56,7 @@ describe('converter', () => {
       })
 
       it('707', () => {
-        expect(this.converter.translateSegmentFromNumber('707')).to.equal('seven hundred seven')
+        expect(this.converter.translateSegmentFromNumber('707')).to.equal('seven hundred and seven')
       })
 
       it('82', () => {
@@ -69,7 +68,7 @@ describe('converter', () => {
       })
 
       it('123', () => {
-        expect(this.converter.translateSegmentFromNumber('123')).to.equal('one hundred twenty three')
+        expect(this.converter.translateSegmentFromNumber('123')).to.equal('one hundred and twenty three')
       })
     })
   })
@@ -90,8 +89,24 @@ describe('converter', () => {
           expect(this.converter.toNumber('three')).to.equal('3')
         })
 
+        it('thirty three', () => {
+          expect(this.converter.toNumber('thirty three')).to.equal('33')
+        })
+
+        it('one thousand, thirty three', () => {
+          expect(this.converter.toNumber('one thousand, thirty three')).to.equal('1.033')
+        })
+
+        it('ten million, one', () => {
+          expect(this.converter.toNumber('ten million, one')).to.equal('10.000.001')
+        })
+
         it('five hundred fifty five thousand, two hundred four', () => {
-          expect(this.converter.toNumber('five hundred and fifty five thousand, two hundred four')).to.equal('555.204')
+          expect(this.converter.toNumber('five hundred fifty five thousand, two hundred four')).to.equal('555.204')
+        })
+
+        it('five hundred and fifty five thousand, two hundred and four', () => {
+          expect(this.converter.toNumber('five hundred and fifty five thousand, two hundred and four')).to.equal('555.204')
         })
       })
 
@@ -109,23 +124,23 @@ describe('converter', () => {
     describe('success', () => {
       describe('standard', () => {
         it('123', () => {
-          expect(this.converter.fromNumber('123')).to.equal('one hundred twenty three')
+          expect(this.converter.fromNumber('123')).to.equal('one hundred and twenty three')
         })
 
         it('999.999', () => {
-          expect(this.converter.fromNumber('999.999')).to.equal('nine hundred and ninety nine thousand, nine hundred ninety nine')
+          expect(this.converter.fromNumber('999.999')).to.equal('nine hundred and ninety nine thousand, nine hundred and ninety nine')
         })
 
         it('1.007.562.343', () => {
-          expect(this.converter.fromNumber('1.007.562.343')).to.equal('one billion, seven million, five hundred and sixty two thousand, three hundred forty three')
+          expect(this.converter.fromNumber('1.007.562.343')).to.equal('one billion, seven million, five hundred and sixty two thousand, three hundred and forty three')
         })
 
         it('4.651.007.562.343', () => {
-          expect(this.converter.fromNumber('4.651.007.562.343')).to.equal('four trillion, six hundred and fifty one billion, seven million, five hundred and sixty two thousand, three hundred forty three')
+          expect(this.converter.fromNumber('4.651.007.562.343')).to.equal('four trillion, six hundred and fifty one billion, seven million, five hundred and sixty two thousand, three hundred and forty three')
         })
 
         it('1.576.432.987.162.354.093.102', () => {
-          expect(this.converter.fromNumber('1.576.432.987.162.354.093.102')).to.equal('one sextillion, five hundred and seventy six quintillion, four hundred and thirty two quadrillion, nine hundred and eighty seven trillion, one hundred and sixty two billion, three hundred and fifty four million, ninety three thousand, one hundred two')
+          expect(this.converter.fromNumber('1.576.432.987.162.354.093.102')).to.equal('one sextillion, five hundred and seventy six quintillion, four hundred and thirty two quadrillion, nine hundred and eighty seven trillion, one hundred and sixty two billion, three hundred and fifty four million, ninety three thousand, one hundred and two')
         })
 
         it('5.000', () => {
@@ -151,11 +166,11 @@ describe('converter', () => {
         })
 
         it('1.212', () => {
-          expect(this.converter.fromNumber('1.212')).to.equal('one thousand, two hundred twelve')
+          expect(this.converter.fromNumber('1.212')).to.equal('one thousand, two hundred and twelve')
         })
 
         it('113.112', () => {
-          expect(this.converter.fromNumber('113.112')).to.equal('one hundred and thirteen thousand, one hundred twelve')
+          expect(this.converter.fromNumber('113.112')).to.equal('one hundred and thirteen thousand, one hundred and twelve')
         })
       })
     })
