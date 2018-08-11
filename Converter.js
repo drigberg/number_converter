@@ -1,3 +1,7 @@
+/*
+ * Module dependencies
+ */
+
 const {
   isObject,
   invert,
@@ -8,6 +12,9 @@ const {
 const fs = require('fs')
 const path = require('path')
 
+/*
+ * Module
+ */
 class Converter {
   /**
    *
@@ -21,7 +28,6 @@ class Converter {
   } = {}) {
     this.locale = this.getLocale(locale)
     this.separator = separator
-    this.numberRegex = new RegExp('^\\d+$')
   }
 
   /**
@@ -33,7 +39,6 @@ class Converter {
     const locales = fs.readdirSync(path.join(__dirname, 'translations'))
       .filter(item => path.extname(item) === '.json')
       .map(item => path.basename(item, '.json'))
-
 
     if (!locales.includes(locale)) {
       throw new Error(`Locale must be one of ${locales.join(', ')}`)
@@ -55,9 +60,14 @@ class Converter {
     }
   }
 
-  invertTranslations(locale) {
-    return reduce(locale, (acc, translations, key) => {
-      acc[key] = invert(translations)
+  /**
+   * Inverts children of object
+   * @param {Object} translations - object with translations to invert
+   * @return {Object} object with inverted children
+   */
+  invertTranslations(translations) {
+    return reduce(translations, (acc, values, key) => {
+      acc[key] = invert(values)
       return acc;
     }, {})
   }
@@ -74,11 +84,12 @@ class Converter {
 
     let ret = []
 
-    // some languages have three-digit exceptions (ex: Spanish 100 === 'cien')
+    // check for three-digit exceptions
     if (this.locale.fromNumber.exceptions[text]) {
       return this.locale.fromNumber.exceptions[text]
     }
 
+    // hundreds
     if (text.length === 3) { // eslint-disable-line max-args
       if (text[0] !== '0') {
         ret.push(this.locale.fromNumber.hundreds[text[0]])
@@ -90,11 +101,13 @@ class Converter {
       }
     }
 
+    // check for two-digit exceptions
     if (this.locale.fromNumber.exceptions[text]) {
       ret.push(this.locale.fromNumber.exceptions[text])
       return ret.join(' ')
     }
 
+    // tens
     if (text.length === 2) {
       if (text[0] !== '0') {
         ret.push(this.locale.fromNumber.tens[text[0]])
@@ -106,6 +119,7 @@ class Converter {
       }
     }
 
+    // ones
     if (text[0] !== '0') {
       ret.push(this.locale.fromNumber.ones[text[0]])
     }
@@ -121,12 +135,14 @@ class Converter {
   fromNumber(input) {
     const segments = input.split(this.separator)
 
+    // start at highest power of one thousand and work towards the ones
     let powerIndex = segments.length - 2
 
     return segments
       .map((segment) => {
         let text = this.translateSegmentFromNumber(segment)
 
+        // add power of one thousand -- may be plural in some languages
         if (powerIndex >= 0 && text) {
           const powerText = this.locale.powers.singular[powerIndex]
 
@@ -159,11 +175,12 @@ class Converter {
     let ret = []
     let words = text.split(' ').filter(item => item !== this.locale.and.text)
 
-    // some languages have three-digit exceptions
+    // check for three-digit exceptions
     if (this.locale.toNumber.exceptions[words[0]]) {
       return this.locale.toNumber.exceptions[words[0]]
     }
 
+    // hundreds
     if (this.locale.toNumber.hundreds[words[0]]) {
       ret.push(this.locale.toNumber.hundreds[words[0]])
       words = words.slice(1)
@@ -174,11 +191,13 @@ class Converter {
       ret.push('0')
     }
 
+    // check for two-digit exceptions
     if (words.length && this.locale.toNumber.exceptions[words[0]]) {
       ret.push(this.locale.toNumber.exceptions[words[0]])
       return ret.join()
     }
 
+    // tens
     if (words.length && this.locale.toNumber.tens[words[0]]) {
       ret.push(this.locale.toNumber.tens[words[0]])
       words = words.slice(1)
@@ -186,6 +205,7 @@ class Converter {
       ret.push('0')
     }
 
+    // ones
     if (words.length && this.locale.toNumber.ones[words[0]]) {
       ret.push(this.locale.toNumber.ones[words[0]])
     } else {
@@ -202,6 +222,8 @@ class Converter {
    */
   toNumber(input) {
     const segments = input.split(', ')
+
+    // cache powers for later
     const pluralPowers = Object.values(this.locale.powers.plural)
     const invertedPlurals = invert(this.locale.powers.plural)
 
@@ -209,56 +231,52 @@ class Converter {
     const highestPowerWord = last(segments[0].split(' '))
     let highestPowerOfOneThousand = 0
 
+    // highest power word may be singular or plural
     if (this.locale.powers.singular.includes(highestPowerWord)) {
       highestPowerOfOneThousand = this.locale.powers.singular.indexOf(highestPowerWord) + 1
     } else if (pluralPowers.includes(highestPowerWord)) {
       highestPowerOfOneThousand = this.locale.powers.singular.indexOf(invertedPlurals[highestPowerWord]) + 1
     }
 
-    if (highestPowerOfOneThousand === 0) {
-      return this.translateSegmentToNumber(input, false)
-    }
-
+    // intialize array
     const ret = Array(highestPowerOfOneThousand + 1).fill('000')
-
 
     for (let i = 0; i < segments.length; i++) {
       // pad after first segment
       const pad = Boolean(i)
       const segment = segments[i]
-
-      let position = ret.length - 1
+      const lastWord = last(segment.split(' '))
 
       // if the segment ends with a word like "thousand", determine its
-      // position and translate the rest
-
+      // position in the array, remove it, and translate the other text
       let powerIndex = -1
-
-      const lastWord = last(segment.split(' '))
 
       if (this.locale.powers.singular.includes(lastWord)) {
         powerIndex = this.locale.powers.singular.indexOf(lastWord)
       } else if (Object.values(this.locale.powers.plural).includes(lastWord)) {
-
         powerIndex = this.locale.powers.singular.indexOf(invertedPlurals[lastWord])
       }
 
-      if (powerIndex > -1) {
-        position = ret.length - (powerIndex + 2)
-
-        // translate everything except the last word
-        let toTranslate = segment.split(' ')
-        toTranslate = toTranslate.slice(0, toTranslate.length - 1).join(' ')
-
-        ret[position] = this.translateSegmentToNumber(toTranslate, pad)
+      // if in final segment below one thousand, return as last element
+      // NOTE: this is not the same as checking for the last segment
+      // of the input
+      if (powerIndex === -1) {
+        ret[ret.length - 1] = this.translateSegmentToNumber(segment, pad)
         continue
       }
 
-      ret[position] = this.translateSegmentToNumber(segment, pad)
+      // translate everything except the last word
+      let toTranslate = segment.split(' ')
+      toTranslate = toTranslate.slice(0, toTranslate.length - 1).join(' ')
+      ret[ret.length - (powerIndex + 2)] = this.translateSegmentToNumber(toTranslate, pad)
     }
 
     return ret.join(this.separator)
   }
 }
+
+/*
+ * Module exports
+ */
 
 module.exports = Converter

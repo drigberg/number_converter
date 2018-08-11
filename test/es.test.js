@@ -71,7 +71,6 @@ describe('spanish', () => {
     })
   })
 
-
   describe('toNumber', () => {
     before(() => {
       this.converter = new Converter({ locale: 'es' })
@@ -108,58 +107,40 @@ describe('spanish', () => {
     })
 
     describe('success', () => {
-      describe('standard', () => {
-        it('123', () => {
-          expect(this.converter.fromNumber('123')).to.equal('ciento vientitres')
-        })
-
-        it('5.000', () => {
-          expect(this.converter.fromNumber('5.000')).to.equal('cinco mil')
-        })
-
-        it('10.001.000', () => {
-          expect(this.converter.fromNumber('10.001.000')).to.equal('diez millones, mil')
-        })
-
-        it('999.999', () => {
-          expect(this.converter.fromNumber('999.999')).to.equal('novecientos noventa y nueve mil, novecientos noventa y nueve')
-        })
-
-        it('1.007.562.343', () => {
-          expect(this.converter.fromNumber('1.007.562.343')).to.equal('one billion, seven million, five hundred and sixty two thousand, three hundred and forty three')
-        })
-
-        it('4.651.007.562.343', () => {
-          expect(this.converter.fromNumber('4.651.007.562.343')).to.equal('four trillion, six hundred and fifty one billion, seven million, five hundred and sixty two thousand, three hundred and forty three')
-        })
-
-        it('1.576.432.987.162.354.093.102', () => {
-          expect(this.converter.fromNumber('1.576.432.987.162.354.093.102')).to.equal('one sextillion, five hundred and seventy six quintillion, four hundred and thirty two quadrillion, nine hundred and eighty seven trillion, one hundred and sixty two billion, three hundred and fifty four million, ninety three thousand, one hundred and two')
-        })
-
-
-
-        it('1.000.000.001', () => {
-          expect(this.converter.fromNumber('1.000.000.001')).to.equal('one billion, one')
-        })
+      it('100', () => {
+        expect(this.converter.fromNumber('100')).to.equal('cien')
       })
 
-      describe('exceptions', () => {
-        it('11', () => {
-          expect(this.converter.fromNumber('11')).to.equal('eleven')
-        })
+      it('123', () => {
+        expect(this.converter.fromNumber('123')).to.equal('ciento vientitres')
+      })
 
-        it('11', () => {
-          expect(this.converter.fromNumber('11')).to.equal('eleven')
-        })
+      it('5.011', () => {
+        expect(this.converter.fromNumber('5.011')).to.equal('cinco mil, once')
+      })
 
-        it('1.212', () => {
-          expect(this.converter.fromNumber('1.212')).to.equal('one thousand, two hundred and twelve')
-        })
+      it('10.001.000', () => {
+        expect(this.converter.fromNumber('10.001.000')).to.equal('diez millones, uno mil')
+      })
 
-        it('113.112', () => {
-          expect(this.converter.fromNumber('113.112')).to.equal('one hundred and thirteen thousand, one hundred and twelve')
-        })
+      it('999.999', () => {
+        expect(this.converter.fromNumber('999.999')).to.equal('novecientos noventa y nueve mil, novecientos noventa y nueve')
+      })
+
+      it('1.007.562.343', () => {
+        expect(this.converter.fromNumber('1.007.562.343')).to.equal('uno mil millones, siete millones, quinientos sesenta y dos mil, trescientos cuarenta y tres')
+      })
+
+      it('4.651.007.562.343', () => {
+        expect(this.converter.fromNumber('4.651.007.562.343')).to.equal('cuatro trillones, seiscientos cincuenta y uno mil millones, siete millones, quinientos sesenta y dos mil, trescientos cuarenta y tres')
+      })
+
+      it('1.576.432.987.162.354.093.102', () => {
+        expect(this.converter.fromNumber('1.576.432.987.162.354.093.102')).to.equal('uno sestillón, quinientos setenta y seis quintillones, cuatrocientos treinta y dos cuatrilliones, novecientos ochenta y siete trillones, ciento sesenta y dos mil millones, trescientos cincuenta y cuatro millones, noventa y tres mil, ciento y dos')
+      })
+
+      it('1.000.000.001', () => {
+        expect(this.converter.fromNumber('1.000.000.001')).to.equal('uno mil millones, uno')
       })
     })
 
