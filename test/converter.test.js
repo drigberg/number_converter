@@ -3,34 +3,73 @@ const { expect } = require('chai')
 const { describe, it } = require('mocha')
 
 describe('converter', () => {
-  describe('translateSegment', () => {
+
+  describe('translateSegmentToNumber', () => {
+    before(() => {
+      this.converter = new Converter('en')
+    })
+
+    it('one', () => {
+      expect(this.converter.translateSegmentToNumber('one')).to.equal('1')
+    })
+
+    it('one (padded)', () => {
+      expect(this.converter.translateSegmentToNumber('one', true)).to.equal('001')
+    })
+
+    it('ninety nine', () => {
+      expect(this.converter.translateSegmentToNumber('ninety nine', false)).to.equal('99')
+    })
+
+    it('ninety nine (padded)', () => {
+      expect(this.converter.translateSegmentToNumber('ninety nine', true)).to.equal('099')
+    })
+
+    it('one hundred', () => {
+      expect(this.converter.translateSegmentToNumber('one hundred', false)).to.equal('100')
+    })
+
+    it('one hundred (padded)', () => {
+      expect(this.converter.translateSegmentToNumber('one hundred', true)).to.equal('100')
+    })
+
+    it('five hundred and five', () => {
+      expect(this.converter.translateSegmentToNumber('five hundred and five', false)).to.equal('505')
+    })
+
+    it('five hundred five', () => {
+      expect(this.converter.translateSegmentToNumber('five hundred five', false)).to.equal('505')
+    })
+  })
+
+  describe('translateSegmentFromNumber', () => {
     before(() => {
       this.converter = new Converter('en')
     })
 
     describe('success', () => {
       it('1', () => {
-        expect(this.converter.translateSegment('001')).to.equal('one')
+        expect(this.converter.translateSegmentFromNumber('001')).to.equal('one')
       })
 
       it('001', () => {
-        expect(this.converter.translateSegment('001')).to.equal('one')
+        expect(this.converter.translateSegmentFromNumber('001')).to.equal('one')
       })
 
       it('707', () => {
-        expect(this.converter.translateSegment('707')).to.equal('seven hundred seven')
+        expect(this.converter.translateSegmentFromNumber('707')).to.equal('seven hundred seven')
       })
 
       it('82', () => {
-        expect(this.converter.translateSegment('82')).to.equal('eighty two')
+        expect(this.converter.translateSegmentFromNumber('82')).to.equal('eighty two')
       })
 
       it('099', () => {
-        expect(this.converter.translateSegment('099')).to.equal('ninety nine')
+        expect(this.converter.translateSegmentFromNumber('099')).to.equal('ninety nine')
       })
 
       it('123', () => {
-        expect(this.converter.translateSegment('123')).to.equal('one hundred twenty three')
+        expect(this.converter.translateSegmentFromNumber('123')).to.equal('one hundred twenty three')
       })
     })
   })
@@ -44,15 +83,15 @@ describe('converter', () => {
     describe('success', () => {
       describe('standard', () => {
         it('one hundred', () => {
-          expect(this.converter.fromNumber('one hundred')).to.equal('100')
+          expect(this.converter.toNumber('one hundred')).to.equal('100')
         })
 
         it('three', () => {
-          expect(this.converter.fromNumber('three')).to.equal('3')
+          expect(this.converter.toNumber('three')).to.equal('3')
         })
 
         it('five hundred fifty five thousand, two hundred four', () => {
-          expect(this.converter.fromNumber('five hundred and fifty five thousand, two hundred four')).to.equal('555.204')
+          expect(this.converter.toNumber('five hundred and fifty five thousand, two hundred four')).to.equal('555.204')
         })
       })
 
