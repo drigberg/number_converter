@@ -2,6 +2,8 @@
 
 Not complete! Just an exercise. Do not clone and expect the Spanish to be 100% grammatically correct (ex: uno mil vs. un mil)
 
+Does not support the number zero, or negatives.
+
 ### usage
 
 Supports English (en) and Spanish (es):

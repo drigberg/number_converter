@@ -57,6 +57,8 @@ class Converter {
       toNumber: this.invertTranslations(translations),
       and,
       powers,
+      invertedPluralPowers: invert(powers.plural),
+      pluralPowers: Object.values(powers.plural)
     }
   }
 
@@ -216,6 +218,24 @@ class Converter {
   }
 
   /**
+   * Determines power of one thousand represented by segment
+   * @param {String} segment - segment of text number
+   * @return {Number} power of one thousand
+   */
+  getPowerFromSegment(segment) {
+    const word = last(segment.split(' '))
+
+    // highest power word may be singular or plural
+    if (this.locale.powers.singular.includes(word)) {
+      return this.locale.powers.singular.indexOf(word) + 1
+    } else if (this.locale.pluralPowers.includes(word)) {
+      return this.locale.powers.singular.indexOf(this.locale.invertedPluralPowers[word]) + 1
+    }
+
+    return 0
+  }
+
+  /**
    * Translates text to number
    * @param {String} input - translated text
    * @return {String} number, with separators
@@ -224,19 +244,8 @@ class Converter {
     const segments = input.split(', ')
 
     // cache powers for later
-    const pluralPowers = Object.values(this.locale.powers.plural)
-    const invertedPlurals = invert(this.locale.powers.plural)
-
     // the last word of the first segment determines the length of the array
-    const highestPowerWord = last(segments[0].split(' '))
-    let highestPowerOfOneThousand = 0
-
-    // highest power word may be singular or plural
-    if (this.locale.powers.singular.includes(highestPowerWord)) {
-      highestPowerOfOneThousand = this.locale.powers.singular.indexOf(highestPowerWord) + 1
-    } else if (pluralPowers.includes(highestPowerWord)) {
-      highestPowerOfOneThousand = this.locale.powers.singular.indexOf(invertedPlurals[highestPowerWord]) + 1
-    }
+    let highestPowerOfOneThousand = this.getPowerFromSegment(segments[0])
 
     // intialize array
     const ret = Array(highestPowerOfOneThousand + 1).fill('000')
@@ -245,22 +254,16 @@ class Converter {
       // pad after first segment
       const pad = Boolean(i)
       const segment = segments[i]
-      const lastWord = last(segment.split(' '))
 
       // if the segment ends with a word like "thousand", determine its
       // position in the array, remove it, and translate the other text
-      let powerIndex = -1
+      const powerIndex = this.getPowerFromSegment(segment)
 
-      if (this.locale.powers.singular.includes(lastWord)) {
-        powerIndex = this.locale.powers.singular.indexOf(lastWord)
-      } else if (Object.values(this.locale.powers.plural).includes(lastWord)) {
-        powerIndex = this.locale.powers.singular.indexOf(invertedPlurals[lastWord])
-      }
 
       // if in final segment below one thousand, return as last element
       // NOTE: this is not the same as checking for the last segment
       // of the input
-      if (powerIndex === -1) {
+      if (powerIndex === 0) {
         ret[ret.length - 1] = this.translateSegmentToNumber(segment, pad)
         continue
       }
@@ -268,7 +271,7 @@ class Converter {
       // translate everything except the last word
       let toTranslate = segment.split(' ')
       toTranslate = toTranslate.slice(0, toTranslate.length - 1).join(' ')
-      ret[ret.length - (powerIndex + 2)] = this.translateSegmentToNumber(toTranslate, pad)
+      ret[ret.length - (powerIndex + 1)] = this.translateSegmentToNumber(toTranslate, pad)
     }
 
     return ret.join(this.separator)

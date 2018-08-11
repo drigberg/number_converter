@@ -1,13 +1,13 @@
 {
-  "name": "number-text-conv",
+  "name": "number-converter",
   "version": "1.0.0",
   "description": "converts numbers to text and vice-versa",
-  "main": "NumberConverter.js",
+  "main": "Converter.js",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --timeout=50000 test/*.test.js"
+    "test": "mocha --timeout=5000 test/*.test.js"
   },
   "author": "",
   "license": "ISC",
